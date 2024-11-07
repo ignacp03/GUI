@@ -1,22 +1,50 @@
 import os
 import time
+import re
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
 from processing.ImgProc import Meassurement
+from processing.SaverLoader import saveData
 
 
 
 def process_images(dark_img_path, bright_img_path, atoms_img_path, meas, magnification, pixelSize):
-    print("Processing images:")
-    print(f"Dark: {dark_img_path}")
-    print(f"Bright: {bright_img_path}")
-    print(f"Atoms: {atoms_img_path}")
+    """
+    Function for imaging processing.
+    1) Uses the path of the Dark Bright and Atoms images to initiate the Measurement class (processing.ImgProc)
+    2) Process: crops ROI, Fits iamge, calculate atom number
+    3) saves the data in the same folder than the images
+
+    Inputs:
+        * Image paths
+        * meas [string] = kind of measurement (MagTrap, HybridTrap, BEC)
+        * magnification [float] = magnification of the imagig system
+        *pixelSize [float] = pixel size in m
+
+    """
+    #print("Processing images:")
+    #print(f"Dark: {dark_img_path}")
+    #print(f"Bright: {bright_img_path}")
+    #print(f"Atoms: {atoms_img_path}")
     data = Meassurement(dark_img_path, bright_img_path, atoms_img_path, meas, magnification, pixelSize)
     data.cropImage()
     data.FitROI()
     data.calculateResults()
-    
+
+    filename = os.path.basename(atoms_img_path)
+    match = re.search(r'_(\d+)\.png$', filename)
+    if match:
+        # Return the numeric identifier as an integer
+        identifier =  int(match.group(1))
+    else:
+        # Return 0 if no identifier is present
+        identifier = 0
+
+    folderPath = os.path.dirname(atoms_img_path)
+    saveData(data, identifier, folderPath)
+
+
 
 
 
@@ -71,8 +99,6 @@ def monitor_folder(parent_folder):
     observer = Observer()
     observer.schedule(event_handler, path=parent_folder, recursive=True)
     observer.start()
-    print(f"Monitoring {parent_folder} for image sets...")
-
     try:
         while True:
             time.sleep(1)
