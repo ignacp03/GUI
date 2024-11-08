@@ -22,12 +22,19 @@ def saveData(data:Meassurement, identifier, folderPath):
     other["popt"] = data.popt
     other["pcov"] = data.pcov
 
+    paths = {}
+
+    paths["Dark"] = data.dark_path
+    paths["Bright"] = data.bright_path
+    paths["Atoms"] = data.atoms_path
+
     dataSet = {}
     dataSet["Identifier"] = identifier
     dataSet["Fitted_Image"] = data.fitted_image
     dataSet["fitStatus"] = data.fitStatus
     dataSet["ROI"] = data.ROI
     dataSet["Results"] = data.results
+    dataSet["Paths"] = paths
     dataSet["Other"] = other
 
     fileName = "processedData.pkl"

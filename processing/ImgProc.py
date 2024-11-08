@@ -12,7 +12,9 @@ class Meassurement():
         dark, bright, atoms: path to the respective images
         meas: kind of measurement. (MagTrap, HybridTrap, BEC)
         """
-
+        self.dark_path = dark
+        self.bright_path = bright
+        self.atoms_path = atoms
         dark_img = ReadImage(dark, fast = True, getCamera=False)
         bright_img = ReadImage(bright, fast = True, getCamera=False)
         atoms_img, self.variables, self.pixelSize, self.camera = ReadImage(atoms, fast = False, getCamera=True)

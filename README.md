@@ -2,10 +2,18 @@
 
 Repository under construction :)
 
+Backend is almost finished. Final touches such as whether identify and discard low atom number images. 
+
+Frontend is a scheme right no. First window designe is almost done. 
+
 TO DO:
-* Create efficient saver/loader functions to save the processed data after the use of the class "Measurement"
-* Finish Auto Watcher
-* Add a non auto watcher: ypu select folder and it just monitors that one. (Also loads existing save data)
+* Reduce nomalization box (is gigant)
+* Maybe reload image?
+* Fill other widgets :)
+
+...
+
+* Connect frontend and backend
 
 
 ### Future Ideas

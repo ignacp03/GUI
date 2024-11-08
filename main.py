@@ -9,7 +9,6 @@ def main():
     # Instantiate and show the main window
     MW = MainWindow()
     MW.show()
-
     # Execute the application's main loop
     sys.exit(app.exec_())
 

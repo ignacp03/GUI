@@ -53,3 +53,5 @@ class MainWindow(QMainWindow):
     def text_changed(self, s): # s is a str
         print(s)
         return s
+    
+    

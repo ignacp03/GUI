@@ -8,17 +8,24 @@ class ToolbarWidget(QToolBar):
         super().__init__("Toolbar", parent)
  
 
-        button_play = QAction(QIcon("images\\control.png"),"Run", self)
-        button_play.setStatusTip("Run watcher")
-        button_play.triggered.connect(self.RunWatcher)
-        self.addAction(button_play)
+        self.action_group_PlayStop = QActionGroup(self)
+        self.action_group_PlayStop.setExclusive(True)
+
+        self.button_play = QAction(QIcon("images\\control.png"),"Run", self)
+        self.button_play.setStatusTip("Run watcher")
+        self.button_play.setCheckable(True) 
+        self.button_play.triggered.connect(self.RunWatcher)
+        self.action_group_PlayStop.addAction(self.button_play)
+        self.addAction(self.button_play)
 
         self.addSeparator()
 
-        button_pause = QAction(QIcon("images\\control-pause.png"), "Pause", self)
-        button_pause.setStatusTip("Pause watcher")
-        button_pause.triggered.connect(self.StopWatcher)
-        self.addAction(button_pause)
+        self.button_pause = QAction(QIcon("images\\control-pause.png"), "Pause", self)
+        self.button_pause.setStatusTip("Pause watcher")
+        self.button_pause.triggered.connect(self.StopWatcher)
+        self.button_pause.setCheckable(True)
+        self.action_group_PlayStop.addAction(self.button_pause)
+        self.addAction(self.button_pause)
 
         self.addSeparator()
 
@@ -67,7 +74,7 @@ class ToolbarWidget(QToolBar):
         """
 
         self.menu_button_meas = QToolButton(self)
-        self.menu_button_meas.setIcon(QIcon("images\\dashboard.png"))
+        self.menu_button_meas.setIcon(QIcon("images\\microscope.jpg"))
         self.menu_button_meas.setText("Measurement")
         #self.menu_button_meas.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
         self.menu_button_meas.setPopupMode(QToolButton.InstantPopup)
@@ -89,14 +96,14 @@ class ToolbarWidget(QToolBar):
 
 
         ## Define meas HybridTrap
-        self.button_meas_HybridTrap = QAction(QIcon("images\\arrow-circle-double.png"), "HybridTrap", self)
+        self.button_meas_HybridTrap = QAction(QIcon("images\\yin-yang.png"), "HybridTrap", self)
         self.button_meas_HybridTrap.triggered.connect(lambda: self.meas_HybridTrap_triggered("HybridTrap"))
         self.button_meas_HybridTrap.setCheckable(True) 
         action_group_meas.addAction(self.button_meas_HybridTrap)
         self.menu_meas.addAction(self.button_meas_HybridTrap)
 
         ## Define meas BEC
-        self.button_meas_BEC = QAction(QIcon("images\\asterisk.png"), "BEC", self)
+        self.button_meas_BEC = QAction(QIcon("images\\target.png"), "BEC", self)
         self.button_meas_BEC.triggered.connect(lambda: self.meas_BEC_triggered("BEC"))
         self.button_meas_BEC.setCheckable(True) 
         action_group_meas.addAction(self.button_meas_BEC)
@@ -104,6 +111,7 @@ class ToolbarWidget(QToolBar):
 
         self.menu_button_meas.setMenu(self.menu_meas)
         self.addWidget(self.menu_button_meas)
+        
 
 
 
@@ -111,40 +119,58 @@ class ToolbarWidget(QToolBar):
 
         
     def mode_auto_triggered(self, option_name):
+        "Set the mode to auto and updates the attribute"
+
+        self.parent().mode = "Auto"
+        self.parent().selected_folder = "Default" #! Set the Default folder (parent folder) #######
         QMessageBox.information(self, "Menu Action Triggered", f"You selected: {option_name}")
-        self.mode = "Auto"
 
     def mode_analysis_triggered(self, option_name):
+        "Set the mode to analysis and updates the attribute"
+        self.parent().mode = "Analysis"
+        self.button_pause.setChecked(True)
+        self.button_pause.trigger()
         QMessageBox.information(self, "Menu Action Triggered", f"You selected: {option_name}")
-        self.mode = "Analysis"
 
 
     def RunWatcher(self, s):
+        self.parent().running = True
         print("Running Watcher")
 
     def StopWatcher(self,s):
+        self.parent().runing = False
         print("Watcher Stopped")
 
     def OpenFolder(self):
         folder_path = QFileDialog.getExistingDirectory(self, "Select Folder", "")
         
         if folder_path:  # Check if a folder was selected
-            QMessageBox.information(self, "Folder Selected", f"Selected Folder: {folder_path}")
             # You can add any logic here to use the selected folder path, e.g., processing files
             self.selected_folder = folder_path  # Store the path in an instance variable for later use
             if self.parent():
                 self.parent().selected_folder = folder_path
+            QMessageBox.information(self, "Folder Selected", f"Selected Folder: {folder_path}")
         else:
             QMessageBox.warning(self, "No Folder Selected", "Please select a folder.")
 
     def meas_MagTrap_triggered(self, option_name):
         QMessageBox.information(self, "Menu Action Triggered", f"You selected: {option_name}")
-        self.meas = "MagTrap"
+        self.parent().meas = "MagTrap"
 
     def meas_HybridTrap_triggered(self, option_name):
         QMessageBox.information(self, "Menu Action Triggered", f"You selected: {option_name}")
-        self.meas = "HybridTrap"
+        self.parent().meas = "HybridTrap"
 
     def meas_BEC_triggered(self, option_name):
         QMessageBox.information(self, "Menu Action Triggered", f"You selected: {option_name}")
-        self.meas = "BEC"
+        self.parent().meas = "BEC"
+
+    def get_main_window(self):
+        parent = self.parent()
+        while parent is not None:
+            # Check the type name without direct import
+            if type(parent).__name__ == 'MainWindow':
+                return parent
+            parent = parent.parent()
+        return None
+        
