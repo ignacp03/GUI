@@ -176,7 +176,7 @@ def calc_ROI(meas, effPS, TOF):
         Tbec = 0.5e-6
         sigma = np.sqrt(kB*Tbec/m*TOF**2)
         sigmaPixel = sigma/effPS
-        return int(sigmaPixel*3)
+        return int(sigmaPixel*2)
     
 
 

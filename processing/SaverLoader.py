@@ -2,7 +2,7 @@ from processing.ImgProc import Meassurement
 import pickle as pkl
 import os
 
-def saveData(data:Meassurement, identifier, folderPath):
+def saveData(data:Meassurement, identifier, filePath):
     """
     Save the data after being processed by ImgProc in processedData.pkl file. 
     If the file exists, the new data is appended to the end of the file.
@@ -12,7 +12,7 @@ def saveData(data:Meassurement, identifier, folderPath):
     inputs: 
         *data [measurement]: data after processing
         *identifier [int]: identifier of the repetition number 
-        *folderPath [str]: path where the images were saved
+        *filePath [str]: path where the images were saved
     
     """
 
@@ -37,9 +37,9 @@ def saveData(data:Meassurement, identifier, folderPath):
     dataSet["Paths"] = paths
     dataSet["Other"] = other
 
-    fileName = "processedData.pkl"
-    full_path = os.path.join(folderPath, fileName)
-
+    full_path = filePath
+    fileName = os.path.basename(filePath)
+    
     if os.path.exists(fileName):
         #if the file exists
         with open(full_path, 'rb+') as f:
@@ -58,17 +58,17 @@ def saveData(data:Meassurement, identifier, folderPath):
 
 
 
-def LoadData(folderPath):
+def LoadData(filePath):
     """
     Loads data from the file processedData.pkl as a list whith the different shots.
 
     Input: 
-        *folderPath[str]: path of the folder where the data is saved.
+        *filePath[str]: path of the file where the data is saved.
     Output: 
         data[list]: list with dictionaries containing the data. 
     """
-    fileName = "processedData.pkl"
-    full_path = os.path.join(folderPath, fileName)
+
+    full_path = os.path.join(filePath)
     with open(full_path, 'rb') as f:
         try:
             data = pkl.load(f)

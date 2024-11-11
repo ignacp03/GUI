@@ -1,6 +1,8 @@
-from PyQt5.QtWidgets import QToolBar, QAction, QFileDialog, QMessageBox, QMenu, QToolButton, QActionGroup
+from PyQt5.QtWidgets import QToolBar, QAction, QFileDialog, QMessageBox, QMenu, QToolButton, QActionGroup, QLineEdit, QWidget
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import QSize, Qt
+
+import os
 
 
 class ToolbarWidget(QToolBar):
@@ -111,13 +113,37 @@ class ToolbarWidget(QToolBar):
 
         self.menu_button_meas.setMenu(self.menu_meas)
         self.addWidget(self.menu_button_meas)
-        
+
+        self.addSeparator()
+
+        """Magnification"""
+        magnificationIcon = QAction(QIcon("images\\magnifier.png"), "magnification", self)
+        magnificationIcon.setStatusTip("Magnification")
+        self.addAction(magnificationIcon)
+
+        self.norm_magnification =  QLineEdit()
+        self.norm_magnification.setText("1.2")
+        self.norm_magnification.setFixedWidth(80) 
+        self.norm_magnification.returnPressed.connect(self.UpdateMagnification)
+        self.norm_magnification.selectionChanged.connect(self.UpdateMagnification)
+        self.addWidget(self.norm_magnification)
 
 
 
 
 
-        
+    def UpdateMagnification(self):
+        mag = self.norm_magnification.text()
+        self.parent().magnification= float(mag)
+        try:
+            self.parent().set_handler.stop
+        except:
+            pass
+        self.parent().set_handler.magnification = mag
+        if self.parent().running == True:
+            self.parent().set_handler.run
+    
+
     def mode_auto_triggered(self, option_name):
         "Set the mode to auto and updates the attribute"
 
@@ -135,10 +161,13 @@ class ToolbarWidget(QToolBar):
 
     def RunWatcher(self, s):
         self.parent().running = True
+        self.parent().selected_folder = self.parent().defaultFolder
+        self.parent().file_watcher.start()
         print("Running Watcher")
 
     def StopWatcher(self,s):
         self.parent().runing = False
+        self.parent().file_watcher.stop()
         print("Watcher Stopped")
 
     def OpenFolder(self):
@@ -148,8 +177,11 @@ class ToolbarWidget(QToolBar):
             # You can add any logic here to use the selected folder path, e.g., processing files
             self.selected_folder = folder_path  # Store the path in an instance variable for later use
             if self.parent():
-                self.parent().selected_folder = folder_path
+                self.parent().selected_folder = os.path.join(folder_path, self.parent().DataFileName)
+                self.parent().file_watcher.stop()
+            self.button_pause.setChecked(True)
             QMessageBox.information(self, "Folder Selected", f"Selected Folder: {folder_path}")
+
         else:
             QMessageBox.warning(self, "No Folder Selected", "Please select a folder.")
 

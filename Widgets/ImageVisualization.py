@@ -1,7 +1,9 @@
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QSlider, QGraphicsView, QGraphicsScene,QLineEdit
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QSizePolicy, QSpacerItem,QLineEdit
 from PyQt5.QtGui import QPixmap, QColor
 from PyQt5.QtCore import Qt, pyqtSignal
 from processing.SaverLoader import LoadData
+
+from os.path import join
 
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -24,7 +26,9 @@ class ImageDisplayWidget(QWidget):
         #layout.addWidget(title_label)
 
         layout_plot = QHBoxLayout()
-        self.figure, self.ax = plt.subplots(figsize=(6*1.5, 4*1.5), facecolor='White') ##CED3DC
+        layout_plot.setContentsMargins(0, 0, 0, 0)
+        layout_plot.setSpacing(0)
+        self.figure, self.ax = plt.subplots(figsize=(6*1.5, 4*1.5), facecolor='#CED3DC') 
         self.canvas = FigureCanvas(self.figure)
         layout_plot.addWidget(self.canvas, stretch = 3)
 
@@ -44,31 +48,47 @@ class ImageDisplayWidget(QWidget):
 
         # Add controls for colormap, normalization, etc.
         control_layout = QHBoxLayout()
-        
+        control_layout.setContentsMargins(0, 0, 0, 0) 
+        control_layout.setSpacing(0)
+        control_layout.setAlignment(Qt.AlignLeft)
+
         # Colormap selection (ComboBox)
         self.colormap_combo = QComboBox(self)
+        self.colormap_combo.setFixedWidth(80)
         self.colormap_combo.setStyleSheet("QComboBox { background-color: #FCF7F8; }")
         self.colormap_combo.addItems(["Blues", "Greys", "coolwarm", "cool", "viridis"])
         self.colormap_combo.textActivated.connect(self.UpdateColorMap)
-        control_layout.addWidget(QLabel("Colormap:"))
+        colormap_label = QLabel("Colormap:")
+        colormap_label.setFixedWidth(65)
+        control_layout.addWidget(colormap_label)
         control_layout.addWidget(self.colormap_combo)
+
+        spacer1 = QSpacerItem(30, 20, QSizePolicy.Fixed, QSizePolicy.Minimum)
+        control_layout.addItem(spacer1)
 
         # Normalization 
         self.norm_Line =  QLineEdit()
         self.norm_Line.setStyleSheet("QLineEdit { background-color: #FCF7F8; }")
+        self.norm_Line.setFixedWidth(80)
         self.norm_Line.setMaxLength(3)
         self.norm_Line.setText("30")  # Default normalization value
-        control_layout.addWidget(QLabel("Normalization:"))
+        norm_label = QLabel("Normalization:")
+        norm_label.setFixedWidth(80)
+        control_layout.addWidget(norm_label)
         control_layout.addWidget(self.norm_Line)
         self.norm_Line.returnPressed.connect(self.UpdateNorm)
 
 
-
+        spacer2 = QSpacerItem(30, 20, QSizePolicy.Fixed, QSizePolicy.Minimum)
+        control_layout.addItem(spacer2)
 
         # Select image
         
-        control_layout.addWidget(QLabel("Image:"))
+        selectImage_label = QLabel("Image:")
+        selectImage_label.setFixedWidth(50)
+        control_layout.addWidget(selectImage_label)
         self.selectImage_combo = QComboBox(self)
+        self.selectImage_combo.setFixedWidth(80)
         self.selectImage_combo.setStyleSheet("QComboBox { background-color: #FCF7F8; }")
         self.selectImage_combo.addItems(["ROI","Atoms", "Dark", "Bright", "OD"])
         self.selectImage_combo.textActivated.connect(self.UpdateDisplayedImage)
@@ -79,7 +99,7 @@ class ImageDisplayWidget(QWidget):
 
         self.setLayout(layout)
 
-    def load_image(self, folder_path = ""): ###! REMOVE =""
+    def load_image(self): ###! REMOVE =""
         # Load the image and display it
 
         main_window = self.get_main_window()  # Get the MainWindow instance
@@ -87,7 +107,8 @@ class ImageDisplayWidget(QWidget):
         if main_window is None:
             raise RuntimeError("Main window not found in parent hierarchy.")
         
-        data = LoadData(folder_path)
+        filePath = join(main_window.selected_folder, main_window.DataFileName)
+        data = LoadData(filePath)
         imageSelected = self.selectImage_combo.currentText()
         if imageSelected == "Atoms":
             image_path = data[-1]["Paths"]["Atoms"]

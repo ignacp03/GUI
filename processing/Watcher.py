@@ -105,25 +105,3 @@ def monitor_folder(parent_folder):
     except KeyboardInterrupt:
         observer.stop()
     observer.join()
-
-
-
-class AutoMode():
-
-    """
-    Displays the last image saved.
-    """
-
-
-
-
-
-
-
-
-
-class TargetFolder():
-
-    """
-    Displays the new images in a specific folder
-    """
