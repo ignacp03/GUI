@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import (
     QLabel,QStatusBar, QVBoxLayout, QWidget, QHBoxLayout, QGroupBox
 )
 
-from os.path import basename, dirname
+from os.path import basename, dirname, join
 from time import sleep
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
@@ -16,6 +16,7 @@ from Widgets.ImageVisualization import ImageDisplayWidget
 from Widgets.MainPlot import MainPlot
 
 from processing.Watcher import ImageSetHandler
+from processing.SaverLoader import LoadData
 
 
 style = """
@@ -34,16 +35,18 @@ class MainWindow(QMainWindow):
 
         ### INITIATE SOME ATRIBUTES ###
         self.running = False
+        self.data = None
         self.defaultFolder = "\\\\files.ad.icfo.net\\groups\\QGE\\Potassium\\Personal folders\\Ignacio\\code\\GUI" #! MODIFY WITH THE DEFAULT DIRECTORY WITH ALL PLOTS #########
-        self.selected_folder = self.defaultFolder
+        self.selected_file = None
         self.meas = "BEC"
         self.mode = "Auto"
         self.magnification = 1.2
         self.DataFileName = "processedData.pkl"
         self.file_watcher = FileWatcher(self.defaultFolder, self.DataFileName)
-        self.file_watcher.path_changed.connect(self.update_path)
-        self.set_handler = SetHandler(self.defaultFolder, self.meas, self.magnification)
-        #self.set_handler.run()
+        self.file_watcher.path_changed.connect(self.update_gui)
+        self.analysisWatcher = AnalysisWatcher(self.defaultFolder, self.meas, self.magnification)
+        
+        
 
 
 
@@ -76,13 +79,13 @@ class MainWindow(QMainWindow):
         self.Raw_Image_widget = ImageDisplayWidget(title = "Raw Pictures", parent = self)
         #Raw_Image_widget.setStyleSheet(style)
 
-        ####self.MainPlot_widget = MainPlot(title= "Main Plot", parent = self) #! Dis-comment
+        self.MainPlot_widget = MainPlot(title= "Main Plot", parent = self)
         #self.MainPlot_widget.setStyleSheet(style)
 
         Column1Layout.addWidget(self.Raw_Image_widget, stretch = 1)
         #self.Raw_Image_widget.load_image()
         
-        #Column1Layout.addWidget(self.MainPlot_widget, stretch = 1)#! Dis-comment
+        Column1Layout.addWidget(self.MainPlot_widget, stretch = 1)#! Dis-comment
         #self.MainPlot_widget.load_plot()#! Dis-comment
         RowLayout.addLayout( Column1Layout, stretch = 2)
 
@@ -104,6 +107,7 @@ class MainWindow(QMainWindow):
 
         self.setCentralWidget(Qw)
         self.load_default_settings()
+        self.analysisWatcher.start()
 
 
     def load_default_settings(self):
@@ -114,40 +118,25 @@ class MainWindow(QMainWindow):
         self.toolbar.button_meas_BEC.setChecked(True)
         self.toolbar.meas = "BEC"
 
-    def update_path(self, new_path):
-        """Slot to handle updated file path."""
-        
-        if dirname(new_path) != self.selected_folder:
-            self.selected_folder = new_path
-            print(f"Updated path to: {self.selected_folder}")
+    def update_gui(self, new_path):
+        """Slot to handle updated gui."""
+        self.data = LoadData(new_path) 
+        if new_path != self.selected_file:
+            self.selected_file = new_path
+            print(f"Updated path to: {self.selected_file}")
+            self.MainPlot_widget.UpdateGroupBy()
         self.Raw_Image_widget.load_image()
+        self.MainPlot_widget.load_plot()
 
     
     def closeEvent(self, event):
         """Ensure the file watcher stops when the application closes."""
-        self.file_watcher.stop()
-        self.set_handler.stop()
+        if self.running:
+            self.file_watcher.stop()
+        self.analysisWatcher.stop()
 
         super().closeEvent(event)
 
-
-class SetHandler(QThread):
-    """QThread for handling the Image Set watcher"""
-    def __init__(self, monitoring_directory, meas, magnification):
-        super().__init__()
-        self.monitoring   = monitoring_directory
-        self.observer = Observer()
-        self.meas = meas
-        self.magnification = magnification
-
-    def run(self):
-        event_handler = ImageSetHandler(self.monitoring, self.meas, self.magnification)
-        self.observer.schedule(event_handler, path=self.monitoring, recursive=True)
-        self.observer.start()
-        self.exec_()
-    def stop(self):
-        self.observer.stop()
-        self.observer.join()
 
 
 class FileWatcherHandler(FileSystemEventHandler):
@@ -177,17 +166,44 @@ class FileWatcher(QThread):
         super().__init__()
         self.directory_to_watch = directory_to_watch
         self.file_name = file_name
-        self.observer = Observer()
+        self.event_handler = FileWatcherHandler(self.path_changed, self.file_name)
+
 
     def run(self):
-        event_handler = FileWatcherHandler(self.path_changed, self.file_name)
-        self.observer.schedule(event_handler, self.directory_to_watch, recursive=True)
+        print("Data loader watcher started")
+        self.observer = Observer()
+        self.observer.schedule(self.event_handler, self.directory_to_watch, recursive=True)
         self.observer.start()
-        self.exec_()  # Keep the thread running
+        self.exec_()
+
 
     def stop(self):
-        self.observer.stop()
-        self.observer.join()
+        print("Data loader watcher stopped")
+        if self.observer:
+            self.observer.stop()
+            self.observer.join()
+
+class AnalysisWatcher(QThread):
+    def __init__(self, directory_to_watch,meas, magnification):
+        super().__init__()
+        self.directory_to_watch = directory_to_watch
+        self.meas = meas
+        self.magnification = magnification 
+            
+    def run(self):
+        print("Analysis observer start")
+        self.event_SetHandler = ImageSetHandler(self.directory_to_watch, self.meas, self.magnification)
+        self.observer_run_SetHandler = Observer()
+        self.observer_run_SetHandler.schedule(self.event_SetHandler, self.directory_to_watch, recursive=True)
+        self.observer_run_SetHandler.start()
+        self.exec_()
+
+    def stop(self):
+        if self.observer_run_SetHandler:
+            print("Stopping Analysis observer")
+            self.observer_run_SetHandler.stop()
+            self.observer_run_SetHandler.join()
+
 
 
 

@@ -33,6 +33,7 @@ def saveData(data:Meassurement, identifier, filePath):
     dataSet["Fitted_Image"] = data.fitted_image
     dataSet["fitStatus"] = data.fitStatus
     dataSet["ROI"] = data.ROI
+    dataSet["Variables"] = data.variables
     dataSet["Results"] = data.results
     dataSet["Paths"] = paths
     dataSet["Other"] = other

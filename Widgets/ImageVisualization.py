@@ -99,7 +99,7 @@ class ImageDisplayWidget(QWidget):
 
         self.setLayout(layout)
 
-    def load_image(self): ###! REMOVE =""
+    def load_image(self): 
         # Load the image and display it
 
         main_window = self.get_main_window()  # Get the MainWindow instance
@@ -107,8 +107,9 @@ class ImageDisplayWidget(QWidget):
         if main_window is None:
             raise RuntimeError("Main window not found in parent hierarchy.")
         
-        filePath = join(main_window.selected_folder, main_window.DataFileName)
-        data = LoadData(filePath)
+        
+        data = main_window.data
+
         imageSelected = self.selectImage_combo.currentText()
         if imageSelected == "Atoms":
             image_path = data[-1]["Paths"]["Atoms"]

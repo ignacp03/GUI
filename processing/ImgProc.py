@@ -67,7 +67,7 @@ class Meassurement():
         if self.center[1]+ROI//2 < imShape[0]: 
             Ymax = self.center[1]+ROI//2
         else: Ymax = imShape[0]
-        if self.center[1]-ROI//2 > imShape[0]:
+        if self.center[1]-ROI//2 > 3:
             Ymin = self.center[1]-ROI//2
         else: Ymin = 0
 
@@ -176,7 +176,7 @@ def calc_ROI(meas, effPS, TOF):
         Tbec = 0.5e-6
         sigma = np.sqrt(kB*Tbec/m*TOF**2)
         sigmaPixel = sigma/effPS
-        return int(sigmaPixel*2)
+        return int(sigmaPixel*4)
     
 
 

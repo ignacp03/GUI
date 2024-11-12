@@ -136,12 +136,11 @@ class ToolbarWidget(QToolBar):
         mag = self.norm_magnification.text()
         self.parent().magnification= float(mag)
         try:
-            self.parent().set_handler.stop
+            self.parent().analysisWatcher.stop()
         except:
             pass
-        self.parent().set_handler.magnification = mag
-        if self.parent().running == True:
-            self.parent().set_handler.run
+        self.parent().analysisWatcher.magnification = mag
+        self.parent().analysisWatcher.run()
     
 
     def mode_auto_triggered(self, option_name):
@@ -150,23 +149,29 @@ class ToolbarWidget(QToolBar):
         self.parent().mode = "Auto"
         self.parent().selected_folder = "Default" #! Set the Default folder (parent folder) #######
         QMessageBox.information(self, "Menu Action Triggered", f"You selected: {option_name}")
+        try:
+            self.parent().file_watcher.run()
+        except:
+            print("Watcher already launched")
+
 
     def mode_analysis_triggered(self, option_name):
         "Set the mode to analysis and updates the attribute"
         self.parent().mode = "Analysis"
         self.button_pause.setChecked(True)
         self.button_pause.trigger()
-        QMessageBox.information(self, "Menu Action Triggered", f"You selected: {option_name}")
+        self.OpenFolder()
 
 
     def RunWatcher(self, s):
         self.parent().running = True
         self.parent().selected_folder = self.parent().defaultFolder
-        self.parent().file_watcher.start()
         print("Running Watcher")
+        self.parent().file_watcher.run()
+        
 
-    def StopWatcher(self,s):
-        self.parent().runing = False
+    def StopWatcher(self):
+        self.parent().running = False
         self.parent().file_watcher.stop()
         print("Watcher Stopped")
 
@@ -174,28 +179,42 @@ class ToolbarWidget(QToolBar):
         folder_path = QFileDialog.getExistingDirectory(self, "Select Folder", "")
         
         if folder_path:  # Check if a folder was selected
-            # You can add any logic here to use the selected folder path, e.g., processing files
             self.selected_folder = folder_path  # Store the path in an instance variable for later use
             if self.parent():
-                self.parent().selected_folder = os.path.join(folder_path, self.parent().DataFileName)
-                self.parent().file_watcher.stop()
+                new_path = os.path.join(folder_path, self.parent().DataFileName)
+                self.parent().selected_file = new_path
+                self.StopWatcher()
             self.button_pause.setChecked(True)
+            print(self.parent().selected_file)
+            self.parent().update_gui(new_path)
             QMessageBox.information(self, "Folder Selected", f"Selected Folder: {folder_path}")
 
         else:
             QMessageBox.warning(self, "No Folder Selected", "Please select a folder.")
 
     def meas_MagTrap_triggered(self, option_name):
-        QMessageBox.information(self, "Menu Action Triggered", f"You selected: {option_name}")
         self.parent().meas = "MagTrap"
+        self.UpdateMeas()
+        QMessageBox.information(self, "Menu Action Triggered", f"You selected: {option_name}")
 
     def meas_HybridTrap_triggered(self, option_name):
-        QMessageBox.information(self, "Menu Action Triggered", f"You selected: {option_name}")
         self.parent().meas = "HybridTrap"
+        self.UpdateMeas()
+        QMessageBox.information(self, "Menu Action Triggered", f"You selected: {option_name}")
 
     def meas_BEC_triggered(self, option_name):
-        QMessageBox.information(self, "Menu Action Triggered", f"You selected: {option_name}")
         self.parent().meas = "BEC"
+        self.UpdateMeas()
+        QMessageBox.information(self, "Menu Action Triggered", f"You selected: {option_name}")
+
+    def UpdateMeas(self):
+        meas =  self.parent().meas
+        try:
+            self.parent().analysisWatcher.stop()
+        except:
+            pass
+        self.parent().analysisWatcher.meas = meas
+        self.parent().analysisWatcher.run()
 
     def get_main_window(self):
         parent = self.parent()
