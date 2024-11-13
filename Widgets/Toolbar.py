@@ -166,14 +166,14 @@ class ToolbarWidget(QToolBar):
     def RunWatcher(self, s):
         self.parent().running = True
         self.parent().selected_folder = self.parent().defaultFolder
-        print("Running Watcher")
-        self.parent().file_watcher.run()
+        if self.parent().file_watcher.running == False:
+            self.parent().file_watcher.run()
         
 
     def StopWatcher(self):
         self.parent().running = False
-        self.parent().file_watcher.stop()
-        print("Watcher Stopped")
+        if self.parent().file_watcher.running == True:
+            self.parent().file_watcher.stop()
 
     def OpenFolder(self):
         folder_path = QFileDialog.getExistingDirectory(self, "Select Folder", "")

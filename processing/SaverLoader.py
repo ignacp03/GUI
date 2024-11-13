@@ -19,6 +19,7 @@ def saveData(data:Meassurement, identifier, filePath):
     other = {}
     other["OpDen"] = data.OpDen
     other["Center"] = data.center
+    other["New Center"] = data.new_center
     other["popt"] = data.popt
     other["pcov"] = data.pcov
 

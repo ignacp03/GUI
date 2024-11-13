@@ -1,7 +1,7 @@
 import sys
 from PyQt5.QtWidgets import (
     QMainWindow, QApplication,
-    QLabel,QStatusBar, QVBoxLayout, QWidget, QHBoxLayout, QGroupBox
+    QLabel,QStatusBar, QVBoxLayout, QWidget, QHBoxLayout, QGroupBox, QMessageBox
 )
 
 from os.path import basename, dirname, join
@@ -14,6 +14,8 @@ from PyQt5.QtCore import Qt, pyqtSignal, QThread
 from Widgets.Helpers import Color
 from Widgets.ImageVisualization import ImageDisplayWidget
 from Widgets.MainPlot import MainPlot
+from Widgets.LogConsole import ConsoleWidget, WorkerThread
+from Widgets.AuxiliarPlots import AuxPlots
 
 from processing.Watcher import ImageSetHandler
 from processing.SaverLoader import LoadData
@@ -45,8 +47,11 @@ class MainWindow(QMainWindow):
         self.file_watcher = FileWatcher(self.defaultFolder, self.DataFileName)
         self.file_watcher.path_changed.connect(self.update_gui)
         self.analysisWatcher = AnalysisWatcher(self.defaultFolder, self.meas, self.magnification)
-        
-        
+
+        self.console = ConsoleWidget()
+        self.worker = WorkerThread()
+        self.worker.text_to_print.connect(self.console.append_text_signal)
+        self.worker.start()
 
 
 
@@ -83,24 +88,17 @@ class MainWindow(QMainWindow):
         #self.MainPlot_widget.setStyleSheet(style)
 
         Column1Layout.addWidget(self.Raw_Image_widget, stretch = 1)
-        #self.Raw_Image_widget.load_image()
         
-        Column1Layout.addWidget(self.MainPlot_widget, stretch = 1)#! Dis-comment
-        #self.MainPlot_widget.load_plot()#! Dis-comment
+        Column1Layout.addWidget(self.MainPlot_widget, stretch = 1)
         RowLayout.addLayout( Column1Layout, stretch = 2)
 
-        label21 = QLabel("Auxiliar plot (fits)")
-        label21.setAlignment(Qt.AlignCenter)
-        label21.setStyleSheet(style)
-        label22 = QLabel("Dialog Box")
-        label22.setAlignment(Qt.AlignCenter)
-        label22.setStyleSheet(style)
+        self.AuxPLot_Widget = AuxPlots(title= "Auxiliar Plots", parent = self)
 
-        Column2Layout.addWidget(label21 , stretch = 1)
-        Column2Layout.addWidget(label22, stretch = 1)
+        Column2Layout.addWidget(self.AuxPLot_Widget , stretch = 1)
+        Column2Layout.addWidget(self.console, stretch = 1)
         RowLayout.addLayout( Column2Layout,  stretch = 1 )
-
-        #Qw = QWidget(Color('#CED3DC'))
+        # Redirect stdout to the console widget
+        sys.stdout = self.console
         Qw = QWidget()
         Qw.setLayout(RowLayout)
         Qw.setStyleSheet("background-color: #CED3DC;")
@@ -120,13 +118,18 @@ class MainWindow(QMainWindow):
 
     def update_gui(self, new_path):
         """Slot to handle updated gui."""
-        self.data = LoadData(new_path) 
-        if new_path != self.selected_file:
-            self.selected_file = new_path
-            print(f"Updated path to: {self.selected_file}")
-            self.MainPlot_widget.UpdateGroupBy()
-        self.Raw_Image_widget.load_image()
-        self.MainPlot_widget.load_plot()
+        try:
+            self.data = LoadData(new_path) 
+            if new_path != self.selected_file:
+                self.selected_file = new_path
+                print(f"Updated path to: {self.selected_file}")
+                self.MainPlot_widget.UpdateGroupBy()
+                self.AuxPLot_Widget.UpdateCustomPlot()
+            self.Raw_Image_widget.load_image()
+            self.MainPlot_widget.load_plot()
+            self.AuxPLot_Widget.selectPlot()
+        except Exception as e:
+            QMessageBox.information(self, "Couldn't load data", "Please select a valid folder.\nError details: " + str(e))
 
     
     def closeEvent(self, event):
@@ -167,20 +170,24 @@ class FileWatcher(QThread):
         self.directory_to_watch = directory_to_watch
         self.file_name = file_name
         self.event_handler = FileWatcherHandler(self.path_changed, self.file_name)
-
+        self.observer = Observer()
+        self.running = False
 
     def run(self):
         print("Data loader watcher started")
         self.observer = Observer()
         self.observer.schedule(self.event_handler, self.directory_to_watch, recursive=True)
         self.observer.start()
+        self.running = True
         self.exec_()
 
 
     def stop(self):
         print("Data loader watcher stopped")
+        
         if self.observer:
             self.observer.stop()
+            self.running = False
             self.observer.join()
 
 class AnalysisWatcher(QThread):

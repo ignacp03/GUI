@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QComboBox, QLabel, QHBoxLayout, QSpacerItem, QCompleter, QSizePolicy
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QComboBox, QLabel, QHBoxLayout, QSpacerItem, QCompleter, QSizePolicy, QLineEdit, QPushButton, QMessageBox
 import matplotlib.pyplot as plt
 from PyQt5.QtCore import Qt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -10,8 +10,8 @@ class MainPlot(QWidget):
     def __init__(self, title="Main Plot", parent=None):
         super().__init__(parent)
         self.setWindowTitle(title)
-        #Create the main layout
 
+        #Create the main layout
         layout = QVBoxLayout()
         self.figure, self.ax = plt.subplots(figsize=(6*1.5, 4*1.5), facecolor='#CED3DC')
         self.canvas = FigureCanvas(self.figure)
@@ -22,13 +22,14 @@ class MainPlot(QWidget):
         # Group by
         Control_layout = QHBoxLayout()
         Control_layout.setSpacing(0)
-        Control_layout.setAlignment(Qt.AlignLeft)
+        Control_layout.setAlignment(Qt.AlignCenter)
 
         GroupBy_label = QLabel("Group by:")
         GroupBy_label.setFixedWidth(60)
         Control_layout.addWidget(GroupBy_label)
         self.selectParam_combo = QComboBox(self)
         self.selectParam_combo.setFixedWidth(250)
+        self.selectParam_combo.setFixedHeight(25)
         self.selectParam_combo.setStyleSheet("QComboBox { background-color: #FCF7F8; }")
         self.selectParam_combo.textActivated.connect(self.GroupBy)
         Control_layout.addWidget(self.selectParam_combo)
@@ -43,6 +44,7 @@ class MainPlot(QWidget):
 
         self.selectPlot_combo = QComboBox(self)
         self.selectPlot_combo.setFixedWidth(150)
+        self.selectPlot_combo.setFixedHeight(25)
         self.selectPlot_combo.addItems(['Fitted Atom Number', 'Integrated Atom Number'])
         self.selectPlot_combo.setStyleSheet("QComboBox { background-color: #FCF7F8; }")
         self.selectPlot_combo.textActivated.connect(self.selectPlot)
@@ -63,10 +65,121 @@ class MainPlot(QWidget):
         self.selectScale_combo.textActivated.connect(self.selectScale)
         Control_layout.addWidget(self.selectScale_combo)
 
-
         layout.addLayout(Control_layout)
 
+
+        ##Control 2
+        Control_layout2 = QHBoxLayout()
+        Control_layout2.setSpacing(0)
+        Control_layout2.setAlignment(Qt.AlignCenter)
+        spacer_width = 20
+
+
+        ### YMIN
+        Ymin_label = QLabel("Ymin:")
+        Ymin_label.setFixedWidth(35)
+        Control_layout2.addWidget(Ymin_label)
+
+        self.ymin_Line =  QLineEdit()
+        self.ymin_Line.setStyleSheet("QLineEdit { background-color: #FCF7F8; }")
+        self.ymin_Line.setFixedWidth(50)
+        Control_layout2.addWidget(self.ymin_Line)
+
+        spacer3 = QSpacerItem(spacer_width, 20, QSizePolicy.Fixed, QSizePolicy.Minimum)
+        Control_layout2.addItem(spacer3)     
+
+        ### YMAX
+        Ymax_label = QLabel("Ymax:")
+        Ymax_label.setFixedWidth(35)
+        Control_layout2.addWidget(Ymax_label)
+
+        self.ymax_Line =  QLineEdit()
+        self.ymax_Line.setStyleSheet("QLineEdit { background-color: #FCF7F8; }")
+        self.ymax_Line.setFixedWidth(50)
+        Control_layout2.addWidget(self.ymax_Line)
+
+
+        spacer4 = QSpacerItem(spacer_width, 20, QSizePolicy.Fixed, QSizePolicy.Minimum)
+        Control_layout2.addItem(spacer4)
+
+
+        ### XMin
+        Xmin_label = QLabel("Xmin:")
+        Xmin_label.setFixedWidth(35)
+        Control_layout2.addWidget(Xmin_label)
+
+        self.xmin_Line =  QLineEdit()
+        self.xmin_Line.setStyleSheet("QLineEdit { background-color: #FCF7F8; }")
+        self.xmin_Line.setFixedWidth(50)
+        Control_layout2.addWidget(self.xmin_Line)
+
+        spacer5 = QSpacerItem(spacer_width, 20, QSizePolicy.Fixed, QSizePolicy.Minimum)
+        Control_layout2.addItem(spacer5)
+
+        ### XMAX
+        Xmax_label = QLabel("Xmax:")
+        Xmax_label.setFixedWidth(35)
+        Control_layout2.addWidget(Xmax_label)
+
+        self.xmax_Line =  QLineEdit()
+        self.xmax_Line.setStyleSheet("QLineEdit { background-color: #FCF7F8; }")
+        self.xmax_Line.setFixedWidth(50)
+        Control_layout2.addWidget(self.xmax_Line)
+
+        spacer6 = QSpacerItem(spacer_width, 20, QSizePolicy.Fixed, QSizePolicy.Minimum)
+        Control_layout2.addItem(spacer6)
+
+
+        ### Save Limits
+        self.save_button = QPushButton("Save limits")
+        self.save_button.setFixedWidth(60)
+        self.save_button.clicked.connect(self.saveButton)
+        Control_layout2.addWidget(self.save_button)
+
+        spacer7 = QSpacerItem(spacer_width, 20, QSizePolicy.Fixed, QSizePolicy.Minimum)
+        Control_layout2.addItem(spacer7)
+
+        ### Standard deviation display
+        self.stdLabel = QLabel("Std: --")
+        self.stdLabel.setFixedWidth(100)
+        Control_layout2.addWidget(self.stdLabel)
+
+
+        layout.addLayout(Control_layout2)
+
         self.setLayout(layout)
+
+
+    def saveButton(self):
+        xMax = self.xmax_Line.text()
+        xMin = self.xmin_Line.text()
+        yMax = self.ymax_Line.text()
+        yMin = self.ymin_Line.text()
+
+        self.ax.autoscale() #Resetting axis
+
+        if xMax: xMax = float(xMax)
+        else: 
+            xMax = self.ax.get_xlim()[-1]
+
+        if xMin: xMin = float(xMin)
+        else: xMin = self.ax.get_xlim()[0]
+
+        if yMax: yMax = float(yMax)
+        else: yMax = self.ax.get_ylim()[-1]
+
+        if yMin: yMin = float(yMin)
+        else: yMin = self.ax.get_ylim()[0]
+
+
+        try: 
+            self.ax.set_ylim([yMin, yMax])
+            self.ax.set_xlim([xMin, xMax])
+            self.canvas.draw()
+
+        except Exception as e:
+            QMessageBox.information(self, "Invalid Limits", "Please select valid limits.\nError details: " + str(e))
+
 
     def selectScale(self):
         self.make_plot()
@@ -111,13 +224,14 @@ class MainPlot(QWidget):
         
         if Param == "":  #If no parameter it displays the iteration
             x = arange(0,len(self.IntAtomNum))
+            std_y = std(array(y)/unit)
             self.ax.clear()
             self.ax.plot(x, array(y)/unit, 'o--', color = 'steelblue')  
             self.ax.set_xlabel("Iteration")
             self.ax.set_ylabel(Plot+" ["+units+"]")
             self.ax.grid(True)
             self.canvas.draw()
-            #! Display the std somewhere
+            self.stdLabel.setText(f"Std: {round(std_y, 2)}")
 
         elif Param in self.variables[-1]: #If parameter selected 
             grouped_data = defaultdict(list)
@@ -137,6 +251,7 @@ class MainPlot(QWidget):
             self.ax.set_ylabel(Plot+" ["+units+"]")
             self.ax.grid(True)
             self.canvas.draw()
+            self.stdLabel.setText("Std: --")
 
 
         
@@ -171,3 +286,5 @@ class MainPlot(QWidget):
                 return parent
             parent = parent.parent()
         return None
+    
+    

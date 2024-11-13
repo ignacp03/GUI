@@ -29,6 +29,7 @@ class Meassurement():
 
 
 
+
     def OD(self, Idark, Ibright, Iatoms):
         "Computes the optical density"
 
@@ -74,7 +75,7 @@ class Meassurement():
         self.ROI = im[Ymin:Ymax, Xmin:Xmax]
         newCx = self.center[0] - Xmin
         NewCy = self.center[1] - Ymin
-        self.center = (newCx, NewCy)
+        self.new_center = (newCx, NewCy)
 
 
     def FindMaximum(self):

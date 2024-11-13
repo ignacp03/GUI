@@ -50,7 +50,7 @@ class ImageDisplayWidget(QWidget):
         control_layout = QHBoxLayout()
         control_layout.setContentsMargins(0, 0, 0, 0) 
         control_layout.setSpacing(0)
-        control_layout.setAlignment(Qt.AlignLeft)
+        control_layout.setAlignment(Qt.AlignCenter)
 
         # Colormap selection (ComboBox)
         self.colormap_combo = QComboBox(self)
@@ -109,7 +109,7 @@ class ImageDisplayWidget(QWidget):
         
         
         data = main_window.data
-
+        
         imageSelected = self.selectImage_combo.currentText()
         if imageSelected == "Atoms":
             image_path = data[-1]["Paths"]["Atoms"]
