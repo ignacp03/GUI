@@ -217,7 +217,7 @@ class AuxPlots(QWidget):
         if self.mainWindow.data == None:
             return 0
         xlabel = self.CustomPlotX_combo.currentText() 
-        ylabel = self.CustomPlotX_combo.currentText() 
+        ylabel = self.CustomPlotY_combo.currentText() 
 
         if xlabel[:-2] == "Center":
             if xlabel[-1] =="x":
@@ -242,15 +242,14 @@ class AuxPlots(QWidget):
         if ylabel in self.CustomVariables:
             y = [image["Variables"][ylabel] for image in self.mainWindow.data if image["fitStatus"] == 0]
 
-        if xlabel == "":
+        if xlabel == "Iteration":
             xtot = sum(1 for image in self.mainWindow.data if image["fitStatus"]==0)
             x = np.arange(xtot)
-            xlabel = "Iteration"
 
-        if ylabel == "":
+        if ylabel == "Iteration":
             ytot = sum(1 for image in self.mainWindow.data if image["fitStatus"]==0)
             y = np.arange(ytot)
-            ylabel = "Iteration"
+
         self.ax.clear()
         if x is not None and y is not None: 
             self.ax.plot(x,y, 'o', color = 'steelblue', zorder = 2)
@@ -264,9 +263,9 @@ class AuxPlots(QWidget):
 
     def UpdateCustomPlot(self):
         """Updates the X and Y custom plot data"""
-        data = self.mainWindow.data[-1]
-        other = ["", "Center x","Center y", "Temperature", "Fitted Atom Number", "Integrated Atom Number"]
-        variables = sorted(list(data["Variables"].keys()))
+        
+        other = ["Iteration", "Center x","Center y", "Temperature", "Fitted Atom Number", "Integrated Atom Number"]
+        variables = self.mainWindow.varyingVariables
         self.CustomVariables = variables
 
         self.CustomPlotX_combo.clear() #Clears previous options

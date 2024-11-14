@@ -41,13 +41,14 @@ class MainWindow(QMainWindow):
         self.defaultFolder = "\\\\files.ad.icfo.net\\groups\\QGE\\Potassium\\Personal folders\\Ignacio\\code\\GUI" #! MODIFY WITH THE DEFAULT DIRECTORY WITH ALL PLOTS #########
         self.selected_file = None
         self.meas = "BEC"
+        self.pixelSize = 7.5e-6
         self.mode = "Auto"
         self.magnification = 1.2
         self.DataFileName = "processedData.pkl"
         self.file_watcher = FileWatcher(self.defaultFolder, self.DataFileName)
         self.file_watcher.path_changed.connect(self.update_gui)
-        self.analysisWatcher = AnalysisWatcher(self.defaultFolder, self.meas, self.magnification)
-
+        self.analysisWatcher = AnalysisWatcher(self.defaultFolder, self.meas, self.magnification, self.pixelSize)
+        self.varyingVariables = []
         self.console = ConsoleWidget()
         self.worker = WorkerThread()
         self.worker.text_to_print.connect(self.console.append_text_signal)
@@ -116,20 +117,50 @@ class MainWindow(QMainWindow):
         self.toolbar.button_meas_BEC.setChecked(True)
         self.toolbar.meas = "BEC"
 
-    def update_gui(self, new_path):
+    def update_gui(self, new_path, openFolder = False):
         """Slot to handle updated gui."""
         try:
             self.data = LoadData(new_path) 
             if new_path != self.selected_file:
                 self.selected_file = new_path
                 print(f"Updated path to: {self.selected_file}")
+                self.varyingVariables = [] #Reset the varying parameter
                 self.MainPlot_widget.UpdateGroupBy()
                 self.AuxPLot_Widget.UpdateCustomPlot()
+            if openFolder:
+                self.varyingVariables = []
+                self.setVaryingVariables2()
+            else:
+                self.setVaryingVariables()
             self.Raw_Image_widget.load_image()
             self.MainPlot_widget.load_plot()
             self.AuxPLot_Widget.selectPlot()
         except Exception as e:
-            QMessageBox.information(self, "Couldn't load data", "Please select a valid folder.\nError details: " + str(e))
+            QMessageBox.information(self, "Couldn't load data", "\nError details: " + str(e))
+
+
+    def setVaryingVariables(self):
+        changedVariables = [variable for variable in self.data[-1]["Variables"] if variable in self.data[-2]["Variables"] 
+                            and self.data[-1]["Variables"][variable] != self.data[-2]["Variables"][variable]]
+        if 'CreationTime' in changedVariables:
+            changedVariables.remove('CreationTime')
+        for changedVariable in changedVariables:
+            if changedVariable not in self.varyingVariables:
+                self.varyingVariables.append(changedVariable)
+        self.MainPlot_widget.UpdateGroupBy()
+        self.AuxPLot_Widget.UpdateCustomPlot()
+
+    def setVaryingVariables2(self):
+        for index in range(len(self.data)-1): #for every image saved
+            for variable in self.data[index]["Variables"]: #we check every variable
+                if variable in self.data[index+1]["Variables"] and self.data[index]["Variables"][variable] != self.data[index+1]["Variables"][variable]: #and if it is different than the next image
+                    if variable not in self.varyingVariables: #and is not aleady stored
+                        self.varyingVariables.append(variable) #store it
+        
+        if 'CreationTime' in self.varyingVariables:
+            self.varyingVariables.remove('CreationTime') #Delete Creation Time
+        self.MainPlot_widget.UpdateGroupBy()
+        self.AuxPLot_Widget.UpdateCustomPlot()
 
     
     def closeEvent(self, event):
@@ -139,6 +170,8 @@ class MainWindow(QMainWindow):
         self.analysisWatcher.stop()
 
         super().closeEvent(event)
+
+    
 
 
 
@@ -191,15 +224,16 @@ class FileWatcher(QThread):
             self.observer.join()
 
 class AnalysisWatcher(QThread):
-    def __init__(self, directory_to_watch,meas, magnification):
+    def __init__(self, directory_to_watch,meas, magnification, pixelSize = None):
         super().__init__()
         self.directory_to_watch = directory_to_watch
         self.meas = meas
         self.magnification = magnification 
+        self.pixelSize = pixelSize
             
     def run(self):
         print("Analysis observer start")
-        self.event_SetHandler = ImageSetHandler(self.directory_to_watch, self.meas, self.magnification)
+        self.event_SetHandler = ImageSetHandler(self.directory_to_watch, self.meas, self.magnification, self.pixelSize)
         self.observer_run_SetHandler = Observer()
         self.observer_run_SetHandler.schedule(self.event_SetHandler, self.directory_to_watch, recursive=True)
         self.observer_run_SetHandler.start()

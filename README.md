@@ -7,8 +7,6 @@ Backend is almost finished. Final touches such as whether identify and discard l
 Frontend is a scheme right no. First window designe is almost done. 
 
 TO DO:
-* Aux Widget
-* Make a menu to choose image to display in the raw plot
 * Optimize LoadData function
 * Set a menu where you can choose the specific image to display in Raw and Aux Highlighted in red the ones with fiStatus 1
 * Set Pixel Size button?

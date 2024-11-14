@@ -128,9 +128,33 @@ class ToolbarWidget(QToolBar):
         self.norm_magnification.selectionChanged.connect(self.UpdateMagnification)
         self.addWidget(self.norm_magnification)
 
+        self.addSeparator()
+
+        pixelSizeIcon = QAction(QIcon("images\\camera.png"), "pixelSize", self)
+        pixelSizeIcon.setStatusTip("Pixel Size [um]")
+        self.addAction(pixelSizeIcon)
+
+        self.norm_pixelSize=  QLineEdit()
+        self.norm_pixelSize.setText("7.5")
+        self.norm_pixelSize.setFixedWidth(80) 
+        self.norm_pixelSize.returnPressed.connect(self.UpdatePixelSize)
+        self.norm_pixelSize.selectionChanged.connect(self.UpdatePixelSize)
+        self.addWidget(self.norm_pixelSize)
 
 
 
+
+    def UpdatePixelSize(self):
+
+        PixSize = self.norm_pixelSize.text()
+        self.parent().pixelSize= float(PixSize)/1e6
+
+        try:
+            self.parent().analysisWatcher.stop()
+        except:
+            pass
+        self.parent().analysisWatcher.pixelSize = self.parent().pixelSize
+        self.parent().analysisWatcher.run()
 
     def UpdateMagnification(self):
         mag = self.norm_magnification.text()
@@ -186,7 +210,7 @@ class ToolbarWidget(QToolBar):
                 self.StopWatcher()
             self.button_pause.setChecked(True)
             print(self.parent().selected_file)
-            self.parent().update_gui(new_path)
+            self.parent().update_gui(new_path, openFolder = True)
             QMessageBox.information(self, "Folder Selected", f"Selected Folder: {folder_path}")
 
         else:

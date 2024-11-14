@@ -222,7 +222,8 @@ class MainPlot(QWidget):
         except:
             return 0 #Returns 0 if there is no data yet
         
-        if Param == "":  #If no parameter it displays the iteration
+        
+        if Param == "Iteration":  #If no parameter it displays the iteration
             x = arange(0,len(self.IntAtomNum))
             std_y = std(array(y)/unit)
             self.ax.clear()
@@ -261,12 +262,12 @@ class MainPlot(QWidget):
     
         if main_window is None:
             raise RuntimeError("Main window not found in parent hierarchy.")
-        data = main_window.data[-1]
-        variables = sorted(list(data["Variables"].keys()))
+        variables = main_window.varyingVariables ###! For list of all variables. sorted(list(data["Variables"].keys()))
+        self.varyingVariables = variables.copy()
         self.selectParam_combo.clear() #Clears previous options
-        self.selectParam_combo.addItems([""]+variables) #Add new options
+        self.selectParam_combo.addItems(variables+["Iteration"]) #Add new options
         self.selectParam_combo.setEditable(True)
-        completer = QCompleter(variables, self) #Set a completer to allow searching a specific parameter
+        completer = QCompleter(variables+["Iteration"], self) #Set a completer to allow searching a specific parameter
         completer.setCaseSensitivity(False) 
         self.selectParam_combo.setCompleter(completer)
 
