@@ -3,6 +3,26 @@
 GUI for the analysis of the absorption images in a ultracold quantum gases experiment. 
 The app is contained in KLabGUI.py. It contains the design of the main window and integrates the different widgets. 
 
+
+## Installation Guide
+
+1) Clone the repository
+```bash
+git clone "url"
+
+```
+2) Install python (I am currently using v.3.11.8)
+
+3) Install pip
+
+4) Create new environment. May be usefull using pyenv
+
+5) Activate venv and go to the gui folder.
+
+```bash
+pip install .
+
+```
 ## Widgets Folder
 
 Contains the four main widgets in the main window and the toolbar. Also some helpers. 
