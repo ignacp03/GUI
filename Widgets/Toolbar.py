@@ -1,6 +1,5 @@
-from PyQt5.QtWidgets import QToolBar, QAction, QFileDialog, QMessageBox, QMenu, QToolButton, QActionGroup, QLineEdit, QWidget
+from PyQt5.QtWidgets import QToolBar, QAction, QFileDialog, QMessageBox, QMenu, QToolButton, QActionGroup, QLineEdit
 from PyQt5.QtGui import QIcon
-from PyQt5.QtCore import QSize, Qt
 
 import os
 

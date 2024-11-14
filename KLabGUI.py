@@ -1,20 +1,20 @@
 import sys
-from PyQt5.QtWidgets import (
-    QMainWindow, QApplication,
-    QLabel,QStatusBar, QVBoxLayout, QWidget, QHBoxLayout, QGroupBox, QMessageBox
-)
-
-from os.path import basename, dirname, join
+from os.path import basename
 from time import sleep
+
+from PyQt5.QtWidgets import (
+    QMainWindow, QApplication,QStatusBar, QVBoxLayout, QWidget, QHBoxLayout, QMessageBox
+)
+from PyQt5.QtCore import pyqtSignal, QThread
+
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
 from Widgets.Toolbar import ToolbarWidget
-from PyQt5.QtCore import Qt, pyqtSignal, QThread
 from Widgets.Helpers import Color
 from Widgets.ImageVisualization import ImageDisplayWidget
 from Widgets.MainPlot import MainPlot
-from Widgets.LogConsole import ConsoleWidget, WorkerThread
+from Widgets.LogConsole import ConsoleWidget
 from Widgets.AuxiliarPlots import AuxPlots
 
 from processing.Watcher import ImageSetHandler
@@ -50,9 +50,6 @@ class MainWindow(QMainWindow):
         self.analysisWatcher = AnalysisWatcher(self.defaultFolder, self.meas, self.magnification, self.pixelSize)
         self.varyingVariables = []
         self.console = ConsoleWidget()
-        self.worker = WorkerThread()
-        self.worker.text_to_print.connect(self.console.append_text_signal)
-        self.worker.start()
 
 
 
@@ -60,20 +57,15 @@ class MainWindow(QMainWindow):
         ###############################
 
         self.setWindowTitle("K Lab Experiment GUI")
-        self.setGeometry(100, 100, 1500, 800)
-        #label = QLabel("Hello!")
-        #label.setAlignment(Qt.AlignCenter)
-
-        widget = Color('#CED3DC')
-
-        
+        self.setGeometry(100, 100, 1500, 800)        
 
         self.toolbar = ToolbarWidget(self)
         self.addToolBar(self.toolbar)
 
         self.setStatusBar(QStatusBar(self))
-        self.statusBar().showMessage("Application starte. Mode: Auto. Measurement: BEC", 5000)
+        self.statusBar().showMessage("Application started. Mode: Auto. Measurement: BEC", 5000)
 
+        ### Set two top widgets ###
 
         RowLayout = QVBoxLayout()
         Column1Layout = QHBoxLayout()
@@ -83,34 +75,37 @@ class MainWindow(QMainWindow):
         RowLayout.setSpacing(10)
 
         self.Raw_Image_widget = ImageDisplayWidget(title = "Raw Pictures", parent = self)
-        #Raw_Image_widget.setStyleSheet(style)
-
         self.MainPlot_widget = MainPlot(title= "Main Plot", parent = self)
-        #self.MainPlot_widget.setStyleSheet(style)
 
         Column1Layout.addWidget(self.Raw_Image_widget, stretch = 1)
-        
         Column1Layout.addWidget(self.MainPlot_widget, stretch = 1)
         RowLayout.addLayout( Column1Layout, stretch = 2)
+
+        #### Set tow bottom widgets ###
 
         self.AuxPLot_Widget = AuxPlots(title= "Auxiliar Plots", parent = self)
 
         Column2Layout.addWidget(self.AuxPLot_Widget , stretch = 1)
         Column2Layout.addWidget(self.console, stretch = 1)
         RowLayout.addLayout( Column2Layout,  stretch = 1 )
+
         # Redirect stdout to the console widget
         sys.stdout = self.console
         Qw = QWidget()
+
+
         Qw.setLayout(RowLayout)
         Qw.setStyleSheet("background-color: #CED3DC;")
 
         self.setCentralWidget(Qw)
         self.load_default_settings()
         self.analysisWatcher.start()
+        self.showMaximized()
+        print("GUI ready")
 
 
     def load_default_settings(self):
-        #Launching with mode auto
+        #Launching with mode auto and BEC
         self.toolbar.button_mode_auto.setChecked(True)
         self.toolbar.mode = "auto" 
         
@@ -118,14 +113,15 @@ class MainWindow(QMainWindow):
         self.toolbar.meas = "BEC"
 
     def update_gui(self, new_path, openFolder = False):
-        """Slot to handle updated gui."""
+        """Slot to Update guy."""
         try:
-            self.data = LoadData(new_path) 
-            if new_path != self.selected_file:
-                self.selected_file = new_path
+            self.data = LoadData(new_path)  #Loads the newest data
+            if new_path != self.selected_file: #checks if the path is new
+                self.selected_file = new_path #Saves new path
                 print(f"Updated path to: {self.selected_file}")
+                print("Loading plots")
                 self.varyingVariables = [] #Reset the varying parameter
-                self.MainPlot_widget.UpdateGroupBy()
+                self.MainPlot_widget.UpdateGroupBy() 
                 self.AuxPLot_Widget.UpdateCustomPlot()
             if openFolder:
                 self.varyingVariables = []
@@ -133,13 +129,17 @@ class MainWindow(QMainWindow):
             else:
                 self.setVaryingVariables()
             self.Raw_Image_widget.load_image()
+            print("Last shot displayed")
             self.MainPlot_widget.load_plot()
+            print("Atom Number plot updated")
             self.AuxPLot_Widget.selectPlot()
+            print("Auxiliar plot displayed")
         except Exception as e:
             QMessageBox.information(self, "Couldn't load data", "\nError details: " + str(e))
 
 
     def setVaryingVariables(self):
+        """Find the varying variables of the last shot compared to the one before"""
         changedVariables = [variable for variable in self.data[-1]["Variables"] if variable in self.data[-2]["Variables"] 
                             and self.data[-1]["Variables"][variable] != self.data[-2]["Variables"][variable]]
         if 'CreationTime' in changedVariables:
@@ -151,6 +151,7 @@ class MainWindow(QMainWindow):
         self.AuxPLot_Widget.UpdateCustomPlot()
 
     def setVaryingVariables2(self):
+        """Find the varying variables of the last shot compared to the one before"""
         for index in range(len(self.data)-1): #for every image saved
             for variable in self.data[index]["Variables"]: #we check every variable
                 if variable in self.data[index+1]["Variables"] and self.data[index]["Variables"][variable] != self.data[index+1]["Variables"][variable]: #and if it is different than the next image
@@ -184,14 +185,12 @@ class FileWatcherHandler(FileSystemEventHandler):
 
     def on_created(self, event):
         if not event.is_directory and basename(event.src_path) == "processedData.pkl":
-            print(f"Creation detected: {event.src_path}")
             self.signal.emit(event.src_path)
             sleep(1)
 
     def on_modified(self, event):
         """Called when a file or directory is modified."""
         if not event.is_directory and basename(event.src_path) == self.file_name:
-            print(f"Modification detected: {event.src_path}")
             self.signal.emit(event.src_path)
             sleep(1)
 
@@ -232,7 +231,7 @@ class AnalysisWatcher(QThread):
         self.pixelSize = pixelSize
             
     def run(self):
-        print("Analysis observer start")
+        print("Analysis observer started")
         self.event_SetHandler = ImageSetHandler(self.directory_to_watch, self.meas, self.magnification, self.pixelSize)
         self.observer_run_SetHandler = Observer()
         self.observer_run_SetHandler.schedule(self.event_SetHandler, self.directory_to_watch, recursive=True)
@@ -245,11 +244,14 @@ class AnalysisWatcher(QThread):
             self.observer_run_SetHandler.stop()
             self.observer_run_SetHandler.join()
 
+    def log_message(self, message):
+        print(message)
 
 
 
 
-app = QApplication(sys.argv)
-w = MainWindow()
-w.show()
-app.exec()
+if __name__=="__main__":
+    app = QApplication(sys.argv)
+    w = MainWindow()
+    w.show()
+    app.exec()

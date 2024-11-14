@@ -31,7 +31,7 @@ def process_images(dark_img_path, bright_img_path, atoms_img_path, meas, magnifi
     data.cropImage()
     data.FitROI()
     data.calculateResults()
-
+    print("Image processed successfully. Saving...")
     filename = os.path.basename(atoms_img_path)
     match = re.search(r'_(\d+)\.png$', filename)
     if match:
@@ -85,6 +85,7 @@ class ImageSetHandler(FileSystemEventHandler):
                 dark_img = self.image_sets[folder_path]["Dark"]
                 bright_img = self.image_sets[folder_path]["Bright"]
                 atoms_img = self.image_sets[folder_path]["Atoms"]
+                print("!!! New set of images detected. Processing... !!!")
 
                 process_images(dark_img, bright_img, atoms_img,  self.meas, self.magnification, self.pixelSize)
 

@@ -3,7 +3,7 @@ from PyQt5.QtCore import Qt
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 import numpy as np
-
+from pandas import DataFrame
 
 class AuxPlots(QWidget):
     def __init__(self, title="Aux Plot", parent=None):
@@ -252,7 +252,15 @@ class AuxPlots(QWidget):
 
         self.ax.clear()
         if x is not None and y is not None: 
-            self.ax.plot(x,y, 'o', color = 'steelblue', zorder = 2)
+            dict1 = {"x":x, "y": y}
+            df = DataFrame.from_dict(dict1)
+            avg = df.groupby('x').mean().reset_index()
+            x = avg['x'].values
+            y_avg = avg['y'].values
+            std = df.groupby('x').std().reset_index()
+            y_std = std['y'].values
+
+            self.ax.errorbar(x, y_avg, y_std, fmt = 'o--', color = 'steelblue',capsize=3, capthick=1.5, ecolor="#799fbf")
             self.ax.set_xlabel(xlabel)
             self.ax.set_ylabel(ylabel)
         else: 

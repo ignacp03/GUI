@@ -1,9 +1,6 @@
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QSizePolicy, QSpacerItem,QLineEdit
-from PyQt5.QtGui import QPixmap, QColor
-from PyQt5.QtCore import Qt, pyqtSignal
-from processing.SaverLoader import LoadData
+from PyQt5.QtCore import Qt
 
-from os.path import join
 
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -71,7 +68,7 @@ class ImageDisplayWidget(QWidget):
         self.norm_Line.setStyleSheet("QLineEdit { background-color: #FCF7F8; }")
         self.norm_Line.setFixedWidth(80)
         self.norm_Line.setMaxLength(3)
-        self.norm_Line.setText("30")  # Default normalization value
+        self.norm_Line.setText("300")  # Default normalization value
         norm_label = QLabel("Normalization:")
         norm_label.setFixedWidth(80)
         control_layout.addWidget(norm_label)
@@ -156,6 +153,7 @@ class ImageDisplayWidget(QWidget):
 
     def UpdateColorMap(self, cmap):
         self.load_image()
+        print("Colormap changed to " + cmap)
 
     def UpdateNorm(self):
         self.load_image()
