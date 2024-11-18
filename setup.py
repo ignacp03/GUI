@@ -5,13 +5,13 @@ setup(
     version='1.0',
     packages=find_packages(),
     install_requires=[
-        'PyQt5 = 5.15.11',
-        'watchdog =6.0.0',
-        'matplotlib = 3.8.3',
-        'numpy= 1.26.4 ',
-        'imageio = 2.36.0',
-        'scipy =  1.12.0',
-        'pandas = 2.2.2',
+        'PyQt5 == 5.15.11',
+        'watchdog ==6.0.0',
+        'matplotlib == 3.8.3',
+        'numpy== 1.26.4 ',
+        'imageio == 2.36.0',
+        'scipy ==  1.12.0',
+        'pandas == 2.2.2',
         # ...
     ],
     #entry_points={
