@@ -1,7 +1,7 @@
 # GUI for the KLab
 
 GUI for the analysis of the absorption images in a ultracold quantum gases experiment. 
-The app is contained in KLabGUI.py. It contains the design of the main window and integrates the different widgets. 
+The app is located in KLabGUI.py. It watches a directory an analizes the data as new images are saved. The main file also contains the design of the main window and integrates the different widgets. 
 
 
 ## Installation Guide
@@ -23,6 +23,9 @@ git clone "url"
 pip install .
 
 ```
+
+6) Edit KLabGUI.py and set the default folder in the first attribute called defaultFolder. 
+
 ## Widgets Folder
 
 Contains the four main widgets in the main window and the toolbar. Also some helpers. 
@@ -67,7 +70,7 @@ It is in charge of monitoring the parent folder and trigger the analysis when a 
  
 
 TO DO:
-* Optimize LoadData function
+
 * Pack the code in an .exe
 
 
@@ -80,4 +83,3 @@ TO DO:
 * Group custom Aux Plots by parameter
 * Set a menu where you can choose the specific image to display in Raw and Aux Highlighted in red the ones with fiStatus 1 (?)
 * Maybe reload image?
-* Try out Analysis watcher within the app

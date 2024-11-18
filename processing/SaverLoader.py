@@ -1,10 +1,10 @@
 from processing.ImgProc import Meassurement
 import pickle as pkl
-import os
+import sqlite3
 
-def saveData(data:Meassurement, identifier, filePath):
+def saveData(data:Meassurement, identifier, full_path):
     """
-    Save the data after being processed by ImgProc in processedData.pkl file. 
+    Save the data after being processed by ImgProc in processedData.db file. 
     If the file exists, the new data is appended to the end of the file.
     If the file doesn't exist, a new one is created. 
     The data is saved in a dictionary with the most important info. 
@@ -12,7 +12,7 @@ def saveData(data:Meassurement, identifier, filePath):
     inputs: 
         *data [measurement]: data after processing
         *identifier [int]: identifier of the repetition number 
-        *filePath [str]: path where the images were saved
+        *full_path [str]: path where the images were saved
     
     """
 
@@ -39,42 +39,67 @@ def saveData(data:Meassurement, identifier, filePath):
     dataSet["Paths"] = paths
     dataSet["Other"] = other
 
-    full_path = filePath
-    fileName = os.path.basename(filePath)
+    saveDataToDB(dataSet, full_path)
+
     
-    if os.path.exists(fileName):
-        #if the file exists
-        with open(full_path, 'rb+') as f:
-            try: #Tries to load the data
-                f.seek(0)
-                existing_data = pkl.load(f)
-            except EOFError: #If the file exist but there is no data
-                existing_data = []
-            existing_data.append(dataSet)
-            f.seek(0)
-            pkl.dump(existing_data, f)
+def saveDataToDB(data_dict, dbPath='processedData.db'):
+    """
+    Save a dictionary as a serialized BLOB to an SQLite database.
+    
+    Parameters:
+        * data_dict [dict]: The dictionary to store.
+        * identifier [int]: A unique identifier for the data set.
+        * dbPath [str]: The path to the SQLite database.
+    """
+    # Connect to the database (creates it if it doesn't exist)
+    conn = sqlite3.connect(dbPath)
+    cursor = conn.cursor()
+    
+    # Create a table if it doesn't already exist
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS data (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            data BLOB
+        )
+    ''')
+    
+    # Serialize the dictionary using pickle
+    serialized_data = pkl.dumps(data_dict)
+    
+    # Insert the serialized data
+    cursor.execute('INSERT OR REPLACE INTO data (data) VALUES (?)', ( serialized_data, ))
+    
+    # Commit the transaction and close the connection
+    conn.commit()
+    conn.close()
+
+def LoadData(dbPath='processedData.db', load_all = True):
+    """
+    Load all data from the SQLite database and return as a list of dictionaries.
+    
+    Parameters:
+        * dbPath [str]: The path to the SQLite database.
+        
+    Returns:
+        * List[dict]: A list containing dictionaries of data sets.
+    """
+    conn = sqlite3.connect(dbPath)
+    cursor = conn.cursor()
+    
+    if load_all:
+        # Select all rows in the data table
+        cursor.execute('SELECT data FROM data')
+        rows = cursor.fetchall()
+    
+        # Deserialize each row and add it to the list
+        data_list = [pkl.loads(row[0]) for row in rows]
+
     else:
-        # If the file doesn't exist, create it and write the data
-        with open(full_path, 'wb') as f:
-            pkl.dump([dataSet], f)
-
-
-
-def LoadData(filePath):
-    """
-    Loads data from the file processedData.pkl as a list whith the different shots.
-
-    Input: 
-        *filePath[str]: path of the file where the data is saved.
-    Output: 
-        data[list]: list with dictionaries containing the data. 
-    """
-
-    full_path = os.path.join(filePath)
-    with open(full_path, 'rb') as f:
-        try:
-            data = pkl.load(f)
-        except: 
-            data = None
+        # Select only the last row
+        cursor.execute('SELECT data FROM data ORDER BY id DESC LIMIT 1')
+        row = cursor.fetchone()
+        # Deserialize the row and create a list with a single element
+        data_list = pkl.loads(row[0]) if row else []
     
-    return data
+    conn.close()
+    return data_list

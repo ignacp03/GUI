@@ -9,7 +9,7 @@ from processing.SaverLoader import saveData
 
 
 
-def process_images(dark_img_path, bright_img_path, atoms_img_path, meas, magnification, pixelSize):
+def process_images(dark_img_path, bright_img_path, atoms_img_path, meas, magnification, pixelSize, savefile):
     """
     Function for imaging processing.
     1) Uses the path of the Dark Bright and Atoms images to initiate the Measurement class (processing.ImgProc)
@@ -42,7 +42,9 @@ def process_images(dark_img_path, bright_img_path, atoms_img_path, meas, magnifi
         identifier = 0
 
     folderPath = os.path.dirname(atoms_img_path)
-    saveData(data, identifier, folderPath)
+    full_path = os.path.join(folderPath, savefile)
+    saveData(data, identifier, full_path)
+    print("Data saved in: "+full_path)
 
 
 
@@ -50,11 +52,12 @@ def process_images(dark_img_path, bright_img_path, atoms_img_path, meas, magnifi
 
 
 class ImageSetHandler(FileSystemEventHandler):
-    def __init__(self, parent_folder, meas, magnification, pixelSize = None):
+    def __init__(self, parent_folder, savefile, meas, magnification, pixelSize = None):
         self.parent_folder = parent_folder
         self.meas = meas
         self.magnification = magnification
         self.pixelSize = pixelSize
+        self.savefile = savefile
         self.image_sets = {}  # Dictionary to store sets of images for each subfolder
 
     def on_created(self, event):
@@ -87,7 +90,7 @@ class ImageSetHandler(FileSystemEventHandler):
                 atoms_img = self.image_sets[folder_path]["Atoms"]
                 print("!!! New set of images detected. Processing... !!!")
 
-                process_images(dark_img, bright_img, atoms_img,  self.meas, self.magnification, self.pixelSize)
+                process_images(dark_img, bright_img, atoms_img,  self.meas, self.magnification, self.pixelSize, self.savefile)
 
                 # Reset the tracking for this folder after processing
                 self.image_sets[folder_path] = {"Dark": None, "Bright": None, "Atoms": None}

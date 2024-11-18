@@ -208,7 +208,7 @@ class ToolbarWidget(QToolBar):
                 self.parent().selected_file = new_path
                 self.StopWatcher()
             self.button_pause.setChecked(True)
-            print(self.parent().selected_file)
+            print("Selected folder: ", self.parent().selected_file)
             self.parent().update_gui(new_path, openFolder = True)
             QMessageBox.information(self, "Folder Selected", f"Selected Folder: {folder_path}")
 

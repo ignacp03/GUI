@@ -1,6 +1,6 @@
 import sys
 from os.path import basename
-from time import sleep
+from time import sleep, time
 
 from PyQt5.QtWidgets import (
     QMainWindow, QApplication,QStatusBar, QVBoxLayout, QWidget, QHBoxLayout, QMessageBox
@@ -36,18 +36,19 @@ class MainWindow(QMainWindow):
 
 
         ### INITIATE SOME ATRIBUTES ###
+        self.defaultFolder = "\\\\files.ad.icfo.net\\groups\\QGE\\Potassium\\Personal folders\\Ignacio\\code\\GUI" #! MODIFY WITH THE DEFAULT DIRECTORY WITH ALL PLOTS #########
+
         self.running = False
         self.data = None
-        self.defaultFolder = "\\\\files.ad.icfo.net\\groups\\QGE\\Potassium\\Personal folders\\Ignacio\\code\\GUI" #! MODIFY WITH THE DEFAULT DIRECTORY WITH ALL PLOTS #########
         self.selected_file = None
         self.meas = "BEC"
         self.pixelSize = 7.5e-6
         self.mode = "Auto"
         self.magnification = 1.2
-        self.DataFileName = "processedData.pkl"
+        self.DataFileName = "processedData.db"
         self.file_watcher = FileWatcher(self.defaultFolder, self.DataFileName)
         self.file_watcher.path_changed.connect(self.update_gui)
-        self.analysisWatcher = AnalysisWatcher(self.defaultFolder, self.meas, self.magnification, self.pixelSize)
+        self.analysisWatcher = AnalysisWatcher(self.defaultFolder,self.DataFileName,  self.meas, self.magnification, self.pixelSize)
         self.varyingVariables = []
         self.console = ConsoleWidget()
 
@@ -113,9 +114,13 @@ class MainWindow(QMainWindow):
         self.toolbar.meas = "BEC"
 
     def update_gui(self, new_path, openFolder = False):
-        """Slot to Update guy."""
+        """Slot to Update gui."""
         try:
-            self.data = LoadData(new_path)  #Loads the newest data
+            self.data = LoadData(new_path, load_all=True) #Loads all the existent data
+            #Here the function is prepared for loading the whole set only when a new folder is found.
+            #However, we sometimes send new sequences with the same name than previous, being therefore stored 
+            #in the same folder. Then, to always have the latest data, we opted for loading all the data.
+
             if new_path != self.selected_file: #checks if the path is new
                 self.selected_file = new_path #Saves new path
                 print(f"Updated path to: {self.selected_file}")
@@ -123,30 +128,38 @@ class MainWindow(QMainWindow):
                 self.varyingVariables = [] #Reset the varying parameter
                 self.MainPlot_widget.UpdateGroupBy() 
                 self.AuxPLot_Widget.UpdateCustomPlot()
+
             if openFolder:
                 self.varyingVariables = []
                 self.setVaryingVariables2()
             else:
                 self.setVaryingVariables()
+
             self.Raw_Image_widget.load_image()
             print("Last shot displayed")
             self.MainPlot_widget.load_plot()
             print("Atom Number plot updated")
             self.AuxPLot_Widget.selectPlot()
             print("Auxiliar plot displayed")
+            sleep(1)
+
         except Exception as e:
             QMessageBox.information(self, "Couldn't load data", "\nError details: " + str(e))
 
 
+
     def setVaryingVariables(self):
         """Find the varying variables of the last shot compared to the one before"""
-        changedVariables = [variable for variable in self.data[-1]["Variables"] if variable in self.data[-2]["Variables"] 
+        if len(self.data)<2:
+            changedVariables = []
+        else: 
+            changedVariables = [variable for variable in self.data[-1]["Variables"] if variable in self.data[-2]["Variables"] 
                             and self.data[-1]["Variables"][variable] != self.data[-2]["Variables"][variable]]
         if 'CreationTime' in changedVariables:
             changedVariables.remove('CreationTime')
         for changedVariable in changedVariables:
             if changedVariable not in self.varyingVariables:
-                self.varyingVariables.append(changedVariable)
+                 self.varyingVariables.append(changedVariable)
         self.MainPlot_widget.UpdateGroupBy()
         self.AuxPLot_Widget.UpdateCustomPlot()
 
@@ -182,17 +195,32 @@ class FileWatcherHandler(FileSystemEventHandler):
         super().__init__()
         self.signal = signal
         self.file_name = file_name
+        self.last_event_time = 0 
+        self.debounce_interval = 10
+
+
+
+    def _should_emit_signal(self):
+        """Check if enough time has passed since the last signal."""
+        ## Windows sends several modification signals for the same file. 
+        ## Therefore, we keep the first and block the rest. 
+        current_time = time()
+        if current_time - self.last_event_time > self.debounce_interval:
+            self.last_event_time = current_time
+            return True
+        return False
 
     def on_created(self, event):
-        if not event.is_directory and basename(event.src_path) == "processedData.pkl":
-            self.signal.emit(event.src_path)
-            sleep(1)
-
+        if not event.is_directory and basename(event.src_path) == self.file_name:
+            sleep(1.5)
+            if self._should_emit_signal():
+                self.signal.emit(event.src_path)
     def on_modified(self, event):
         """Called when a file or directory is modified."""
         if not event.is_directory and basename(event.src_path) == self.file_name:
-            self.signal.emit(event.src_path)
-            sleep(1)
+            sleep(1.5)
+            if self._should_emit_signal():
+                self.signal.emit(event.src_path)
 
 class FileWatcher(QThread):
     path_changed = pyqtSignal(str)
@@ -202,12 +230,12 @@ class FileWatcher(QThread):
         self.directory_to_watch = directory_to_watch
         self.file_name = file_name
         self.event_handler = FileWatcherHandler(self.path_changed, self.file_name)
-        self.observer = Observer()
+        self.observer = Observer(timeout=5) 
         self.running = False
 
     def run(self):
         print("Data loader watcher started")
-        self.observer = Observer()
+        self.observer = Observer(timeout=5) 
         self.observer.schedule(self.event_handler, self.directory_to_watch, recursive=True)
         self.observer.start()
         self.running = True
@@ -223,16 +251,17 @@ class FileWatcher(QThread):
             self.observer.join()
 
 class AnalysisWatcher(QThread):
-    def __init__(self, directory_to_watch,meas, magnification, pixelSize = None):
+    def __init__(self, directory_to_watch,saveFile, meas, magnification, pixelSize = None):
         super().__init__()
         self.directory_to_watch = directory_to_watch
+        self.savefile = saveFile
         self.meas = meas
         self.magnification = magnification 
         self.pixelSize = pixelSize
             
     def run(self):
         print("Analysis observer started")
-        self.event_SetHandler = ImageSetHandler(self.directory_to_watch, self.meas, self.magnification, self.pixelSize)
+        self.event_SetHandler = ImageSetHandler(self.directory_to_watch,self.savefile,self.meas, self.magnification, self.pixelSize)
         self.observer_run_SetHandler = Observer()
         self.observer_run_SetHandler.schedule(self.event_SetHandler, self.directory_to_watch, recursive=True)
         self.observer_run_SetHandler.start()
