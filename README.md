@@ -24,7 +24,8 @@ pip install .
 
 ```
 
-6) Edit KLabGUI.py and set the default folder in the first attribute called defaultFolder. 
+6) Edit KLabGUI.py and set the default folder in the first attribute called defaultFolder.
+7) Warning! One must be in the app folder while launching the GUI to succesfuly laod all the icons. This will be modified in the future.
 
 ## Widgets Folder
 
