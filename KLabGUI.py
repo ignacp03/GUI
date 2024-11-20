@@ -1,10 +1,12 @@
 import sys
-from os.path import basename
+from os.path import basename, dirname, abspath
+from os import chdir
 from time import sleep, time
 
 from PyQt5.QtWidgets import (
-    QMainWindow, QApplication,QStatusBar, QVBoxLayout, QWidget, QHBoxLayout, QMessageBox
+    QMainWindow, QApplication,QStatusBar, QVBoxLayout, QWidget, QHBoxLayout, QMessageBox 
 )
+from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import pyqtSignal, QThread
 
 from watchdog.observers import Observer
@@ -58,7 +60,8 @@ class MainWindow(QMainWindow):
         ###############################
 
         self.setWindowTitle("K Lab Experiment GUI")
-        self.setGeometry(100, 100, 1500, 800)        
+        self.setGeometry(100, 100, 1500, 800)  
+        self.setWindowIcon(QIcon(r"images\\icon.ico"))      
 
         self.toolbar = ToolbarWidget(self)
         self.addToolBar(self.toolbar)
@@ -280,7 +283,9 @@ class AnalysisWatcher(QThread):
 
 
 if __name__=="__main__":
+    chdir(dirname(abspath(sys.argv[0])))
     app = QApplication(sys.argv)
+    app.setWindowIcon(QIcon(r"images\\icon.ico"))
     w = MainWindow()
     w.show()
     app.exec()

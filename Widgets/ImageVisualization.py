@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QSizePolicy, QSpacerItem,QLineEdit
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QSizePolicy, QSpacerItem,QLineEdit, QMessageBox
 from PyQt5.QtCore import Qt
 
 
@@ -69,6 +69,7 @@ class ImageDisplayWidget(QWidget):
         self.norm_Line.setFixedWidth(80)
         self.norm_Line.setMaxLength(3)
         self.norm_Line.setText("300")  # Default normalization value
+        self.norm_value = 300/1000
         norm_label = QLabel("Normalization:")
         norm_label.setFixedWidth(80)
         control_layout.addWidget(norm_label)
@@ -134,9 +135,12 @@ class ImageDisplayWidget(QWidget):
         FAN = data[-1]["Results"]["Fitted Atom Number"]
         Temp = data[-1]["Results"]["Temperature"]
         colormap = self.colormap_combo.currentText()
-        norm_value = float(self.norm_Line.text())/1000
+        try:
+            self.norm_value = int(self.norm_Line.text())/1000
+        except:
+            QMessageBox.information(self, "Error", "Please select a valid value for the normalization. Int from 0 to 999. ")
 
-        self.ax.imshow(image/np.max(image), cmap=colormap, vmin = 0, vmax = norm_value)
+        self.ax.imshow(image/np.max(image), cmap=colormap, vmin = 0, vmax = self.norm_value)
 
         if main_window.meas == "MagTrap" or main_window .meas == "HybridTrap":
             self.IAN_label.setText(f"Integrated #Atom: {np.round(IAN/1e6,3)} million.")

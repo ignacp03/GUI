@@ -6,25 +6,17 @@ The app is located in KLabGUI.py. It watches a directory an analizes the data as
 
 ## Installation Guide
 
-1) Clone the repository
-```bash
-git clone "url"
+More detailed guide here. 
 
-```
+1) Clone the repository
+
 2) Install python (I am currently using v.3.11.8)
 
-3) Install pip
+3) Create new environment. May be usefull using pyenv
 
-4) Create new environment. May be usefull using pyenv
+4) Activate venv and install the GUI.
 
-5) Activate venv and go to the gui folder.
-
-```bash
-pip install .
-
-```
-
-6) Edit KLabGUI.py and set the default folder in the first attribute called defaultFolder. 
+5) Edit KLabGUI.py and set the default folder in the first attribute called defaultFolder. 
 
 ## Widgets Folder
 
@@ -69,12 +61,59 @@ Contains two function to save and load the data. It saves the data to a file cal
 It is in charge of monitoring the parent folder and trigger the analysis when a new set of images are detected.
  
 
-TO DO:
-
-* Pack the code in an .exe
 
 
-...
+
+
+# Detailed Installation Guide
+
+1) First one neeed to install python. A version newer than 3.11.8 should suffice, but you can install that one for full compatibility (https://www.python.org/downloads/release/python-3118/). When installing, I would recommend to not add python to the path to avoid interfering with previously installed versions. Note the installation path (on Windows it usually is "C:\Users\[user]\AppData\Local\Programs\Python\Python311\python.exe" )
+
+2) Now we need to create a virtual environment. One could create them in a folder where all Venvs are stored or in the same folder than the repository. Open windows powershell:
+
+´´´bash
+"Path\to\Python 3.11\python.exe" -m venv "Path\to\Venv\Name_Of_Venv" 
+´´´
+For instance, in the installation on PC1281 the GUI repository is cloned on E:\Experiment\KLabGUI. Therefore:
+
+´´´bash
+C:\Users\lab-qge\AppData\Local\Programs\Python\Python311\python.exe -m venv E:\Experiment\KLabGUI\KLabGUI_venv 
+´´´
+
+3) install the repository on the virtual environment. One can run setup.py or via pip install .
+
+´´´bash
+"Path\to\Venv\Name_Of_Venv\Scripts\activate" 
+cd "Path\to\repository"
+pip install .
+´´´
+
+Example on PC 1281:
+
+´´´bash
+E:\Experiment\KLabGUI\KLabGUI_venv\Scripts\activate 
+cd E:\Experiment\KLabGUI\GUI-main
+pip install .
+´´´
+
+
+4) Right now one can launch the app by activating the virtual environment. To easy the launching one can create a script for this and create a shortcut. For this, lauch notepad or a text editor. Write
+
+´´´bash
+# Activate the virtual environment
+& ""Path\to\Venv\Name_Of_Venv\Scripts\Activate.ps1"
+
+# Run the GUI
+python "Path\to\Repo\KLabGUI.py"
+´´´
+and save it as a "Name.ps1". It can be stored anywhere, for example on the GUI folder. 
+
+Then move to the folder when one wants to have the shortcut. Right click, new, shortcut. Then, on "location on the item" one must type:
+
+C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -WindowStyle Hidden -ExecutionPolicy Bypass -File "Path\to\.ps1"
+
+Right click on the shortcut, under properties one can change the icon. 
+
 
 
 

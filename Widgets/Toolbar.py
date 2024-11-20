@@ -31,6 +31,7 @@ class ToolbarWidget(QToolBar):
         self.addSeparator()
 
         button_folder = QAction(QIcon("images\\folder.png"), "Open Path", self)
+        button_folder.setStatusTip("Open Folder")
         button_folder.triggered.connect(self.OpenFolder)
         self.addAction(button_folder)
 
@@ -47,6 +48,7 @@ class ToolbarWidget(QToolBar):
         self.menu_button.setPopupMode(QToolButton.InstantPopup)
 
         self.menu_mode = QMenu(self.menu_button)
+        self.menu_button.setStatusTip("Mode")
 
         #Define action group
         action_group_mode = QActionGroup(self)
@@ -82,6 +84,7 @@ class ToolbarWidget(QToolBar):
 
 
         self.menu_meas = QMenu(self.menu_button_meas)
+        self.menu_button_meas.setStatusTip("Measurement")
 
         #Define action group
         action_group_meas = QActionGroup(self)
@@ -146,7 +149,10 @@ class ToolbarWidget(QToolBar):
     def UpdatePixelSize(self):
 
         PixSize = self.norm_pixelSize.text()
-        self.parent().pixelSize= float(PixSize)/1e6
+        try: 
+            self.parent().pixelSize= float(PixSize)/1e6
+        except:
+            QMessageBox.information(self, "Error", "Please, select a valid value for the pixel size.")
 
         try:
             self.parent().analysisWatcher.stop()
@@ -157,7 +163,10 @@ class ToolbarWidget(QToolBar):
 
     def UpdateMagnification(self):
         mag = self.norm_magnification.text()
-        self.parent().magnification= float(mag)
+        try: 
+            self.parent().magnification= float(mag)
+        except:
+            QMessageBox.information(self, "Error", "Please, select a valid value for the magnification.")
         try:
             self.parent().analysisWatcher.stop()
         except:
@@ -170,7 +179,7 @@ class ToolbarWidget(QToolBar):
         "Set the mode to auto and updates the attribute"
 
         self.parent().mode = "Auto"
-        self.parent().selected_folder = "Default" #! Set the Default folder (parent folder) #######
+        self.parent().selected_file = None 
         QMessageBox.information(self, "Menu Action Triggered", f"You selected: {option_name}")
         try:
             self.parent().file_watcher.run()

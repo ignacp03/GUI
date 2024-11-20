@@ -158,17 +158,33 @@ class MainPlot(QWidget):
 
         self.ax.autoscale() #Resetting axis
 
-        if xMax: xMax = float(xMax)
+        if xMax: 
+            try: xMax = float(xMax)
+            except: 
+                xMax = self.ax.get_xlim()[-1]
+                QMessageBox.information(self, "Error", "Please, select a valid value for the xMax limit.")
         else: 
             xMax = self.ax.get_xlim()[-1]
 
-        if xMin: xMin = float(xMin)
+        if xMin: 
+            try: xMin = float(xMin)
+            except:
+                xMin = self.ax.get_xlim()[0]
+                QMessageBox.information(self, "Error", "Please, select a valid value for the xMin limit.")
         else: xMin = self.ax.get_xlim()[0]
 
-        if yMax: yMax = float(yMax)
+        if yMax: 
+            try: yMax = float(yMax)
+            except: 
+                yMax = self.ax.get_ylim()[-1]
+                QMessageBox.information(self, "Error", "Please, select a valid value for the yMax limit.")
         else: yMax = self.ax.get_ylim()[-1]
 
-        if yMin: yMin = float(yMin)
+        if yMin: 
+            try: yMin = float(yMin)
+            except:
+                yMin = self.ax.get_ylim()[0]
+                QMessageBox.information(self, "Error", "Please, select a valid value for the yMin limit.")
         else: yMin = self.ax.get_ylim()[0]
 
 
